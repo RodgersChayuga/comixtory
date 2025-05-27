@@ -1,51 +1,71 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ComicNFT.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract Marketplace is ReentrancyGuard, Ownable {
+contract Marketplace is ReentrancyGuard {
+    ComicNFT public comicNFT;
+    address payable public owner;
+    uint256 public feePercent = 2; // marketplace fee
+
     struct Listing {
         address seller;
-        address nftAddress;
-        uint256 tokenId;
         uint256 price;
-        bool isSold;
+        bool active;
     }
 
-    uint256 public listingId;
+    // tokenId => Listing
     mapping(uint256 => Listing) public listings;
 
-    event ComicListed(uint256 indexed id, address indexed seller, address indexed nftAddress, uint256 tokenId, uint256 price);
-    event ComicSold(uint256 indexed id, address buyer);
+    event Listed(uint256 tokenId, address seller, uint256 price);
+    event Sale(uint256 tokenId, address buyer, uint256 price);
 
-    function listComic(address nftAddress, uint256 tokenId, uint256 price) external nonReentrant {
-        require(price > 0, "Price must be greater than 0");
-        IERC721(nftAddress).transferFrom(msg.sender, address(this), tokenId);
-
-        listings[listingId] = Listing(msg.sender, nftAddress, tokenId, price, false);
-        emit ComicListed(listingId, msg.sender, nftAddress, tokenId, price);
-        listingId++;
+    constructor(address _comicNFT) {
+        comicNFT = ComicNFT(_comicNFT);
+        owner = payable(msg.sender);
     }
 
-    function buyComic(uint256 _listingId) external payable nonReentrant {
-        Listing storage listing = listings[_listingId];
-        require(!listing.isSold, "Comic already sold");
-        require(msg.value >= listing.price, "Insufficient payment");
+    function listNFT(uint256 tokenId, uint256 price) external {
+        require(comicNFT.ownerOf(tokenId) == msg.sender, "Not owner");
+        require(price > 0, "Price must be > 0");
+        comicNFT.transferFrom(msg.sender, address(this), tokenId);
 
-        listing.isSold = true;
-        payable(listing.seller).transfer(listing.price);
-        IERC721(listing.nftAddress).transferFrom(address(this), msg.sender, listing.tokenId);
+        listings[tokenId] = Listing(msg.sender, price, true);
 
-        emit ComicSold(_listingId, msg.sender);
+        emit Listed(tokenId, msg.sender, price);
     }
 
-    function getListing(uint256 _listingId) external view returns (Listing memory) {
-        return listings[_listingId];
+    function buyNFT(uint256 tokenId) external payable nonReentrant {
+        Listing memory item = listings[tokenId];
+        require(item.active, "Not listed");
+        require(msg.value >= item.price, "Insufficient payment");
+
+        listings[tokenId].active = false;
+
+        // Marketplace fee
+        uint256 fee = (msg.value * feePercent) / 100;
+        uint256 sellerAmount = msg.value - fee;
+
+        // Pay seller
+        payable(item.seller).transfer(sellerAmount);
+        // Pay marketplace owner
+        owner.transfer(fee);
+
+        // Transfer NFT to buyer
+        comicNFT.transferFrom(address(this), msg.sender, tokenId);
+
+        emit Sale(tokenId, msg.sender, msg.value);
     }
 
-    function withdraw() external onlyOwner {
-        payable(owner()).transfer(address(this).balance);
+    function cancelListing(uint256 tokenId) external {
+        Listing memory item = listings[tokenId];
+        require(item.seller == msg.sender, "Not seller");
+        require(item.active, "Not active listing");
+
+        listings[tokenId].active = false;
+
+        // Return NFT to seller
+        comicNFT.transferFrom(address(this), msg.sender, tokenId);
     }
 }

@@ -1,21 +1,21 @@
-import { ethers } from "hardhat";
+const hre = require("hardhat");
 
 async function main() {
-    const [deployer] = await hre.ethers.getSigners();
-
-    console.log("Deploying contracts with:", deployer.address);
-
-    // Deploy ComicNFT first
-    const ComicNFT = await ethers.getContractFactory("ComicNFT");
+    const ComicNFT = await hre.ethers.getContractFactory("ComicNFT");
     const comicNFT = await ComicNFT.deploy();
     await comicNFT.deployed();
     console.log("ComicNFT deployed to:", comicNFT.address);
 
-    // Deploy Marketplace and pass ComicNFT address (optional)
     const Marketplace = await hre.ethers.getContractFactory("Marketplace");
-    const marketplace = await Marketplace.deploy();
+    const marketplace = await Marketplace.deploy(comicNFT.address);
     await marketplace.deployed();
     console.log("Marketplace deployed to:", marketplace.address);
+
+    // Optionally: grant marketplace approval to manage NFTs
+    const tx = await comicNFT.setApprovalForAll(marketplace.address, true);
+    await tx.wait();
+
+    console.log("Marketplace approved to transfer NFTs");
 }
 
 main()
