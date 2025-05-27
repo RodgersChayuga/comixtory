@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Comixtory - AI Comic Storybook Creator
 
-First, run the development server:
+An AI-powered platform where users can create, mint, and sell personalized comic storybooks using custom story input, character names, and images. Built with Next.js, wagmi, viem, and Solidity on the Base blockchain.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Tech Stack
+- **Frontend**: Next.js 14, TypeScript, shadcn/ui, TailwindCSS
+- **Smart Contracts**: Solidity, Hardhat
+- **Blockchain**: Base Mainnet
+- **Wallet Integration**: wagmi + viem
+- **AI Tools**: OpenAI (story), Replicate (image generation)
+- **Storage**: Pinata IPFS
+
+---
+
+## Repository Structure
+```
+comixtory-monorepo/
+├── apps/
+│   ├── web/                  # Frontend (Next.js + shadcn + wagmi)
+│   └── api/                  # Internal Next.js API routes
+│
+├── contracts/               # Solidity smart contracts (NFT + Marketplace)
+│   ├── ComicNFT.sol
+│   ├── Marketplace.sol
+│   └── scripts/
+│       └── deploy.js
+│
+├── lib/
+│   ├── pinata.ts            # Pinata IPFS upload helpers
+│   ├── replicate.ts         # Replicate API (image generation)
+│   ├── openai.ts            # OpenAI API (story transformation)
+│   └── zustandStore.ts      # Zustand state management
+│
+├── public/
+│   └── images/
+│
+├── .env.example
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setup Instructions
+1. **Clone the repo**
+```bash
+git clone https://github.com/YOUR_USERNAME/comixtory-monorepo.git
+cd comixtory-monorepo
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Install dependencies**
+```bash
+pnpm install
+```
 
-## Learn More
+3. **Setup environment**
+Rename `.env.example` to `.env` and add your keys:
+```
+NEXT_PUBLIC_REPLICATE_API_TOKEN=...
+NEXT_PUBLIC_OPENAI_API_KEY=...
+NEXT_PUBLIC_PINATA_JWT=...
+NEXT_PUBLIC_ALCHEMY_BASE_URL=...
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=...
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. **Compile Contracts**
+```bash
+cd contracts && pnpm hardhat compile
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Run App**
+```bash
+pnpm dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Features
+- 🎨 AI Comic Generator: from user input (story + character names + image)
+- 🖼️ Replicate image previews before mint
+- 📦 IPFS upload via Pinata
+- 🪙 NFT minting to Base chain
+- 🛒 Custom Marketplace: list, buy, filter, search
+- 🔍 Gallery view with ownership filters
+- 🔗 Shareable comic NFT pages
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Smart Contracts
+### ComicNFT.sol
+- ERC721-compliant NFT for comic books
+- Mints NFT with IPFS metadata
+- Tracks creator/owner per comic
+
+### Marketplace.sol
+- Lists NFT for sale
+- Allows purchase of listed comics
+- Emits events for frontend syncing
+
+---
+
+## License
+MIT
+```bash
+
+Let me know when you're ready to:
+
+✅ Generate the full **`ComicNFT.sol`** and **`Marketplace.sol`**  
+✅ Set up Hardhat deployment  
+✅ Wire it to the frontend with wagmi + viem hooks
+
+Or if you'd like to push the current state to a GitHub repo now.
+
+```
+
+**Commands Cheat Sheet**
+```bash
+# Compile smart contracts
+pnpm hardhat compile
+
+# Deploy contracts (modify deploy.js config)
+pnpm hardhat run scripts/deploy.js --network base
+```
+
+**Roadmap**
+```bash
+✅ Comic input + character name/image handling
+✅ AI image generation preview (Replicate)
+✅ IPFS metadata + image storage (Pinata)
+✅ NFT smart contracts (ComicNFT)
+✅ Marketplace smart contract
+✅ Wagmi wallet interaction + viem hooks
+✅ NFT listing + buying on custom UI
+🔜 Animation of panel transitions
+🔜 Share-to-socials & download comic feature
+```
